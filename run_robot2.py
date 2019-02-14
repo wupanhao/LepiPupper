@@ -8,6 +8,7 @@ from pupper.HardwareInterface import HardwareInterface
 from pupper.Config import Configuration
 from pupper.Kinematics import four_legs_inverse_kinematics
 
+import math
 def main(use_imu=False):
     """Main program
     """
@@ -44,7 +45,7 @@ def main(use_imu=False):
         print("Waiting for L1 to activate robot.")
         while True:
             command = joystick_interface.get_command(state,True)
-            print(command)
+            #print(command)
             joystick_interface.set_color(config.ps4_deactivated_color)
             if command.activate_event == 1:
                 break
@@ -74,6 +75,11 @@ def main(use_imu=False):
             controller.run(state, command)
 
             # Update the pwm widths going to the servos
+            angles = []
+            for leg in state.joint_angles:
+              for i in leg:
+                angles.append(int(i/math.pi*180))
+            print(angles,state.joint_angles)
             hardware_interface.set_actuator_postions(state.joint_angles)
 
 

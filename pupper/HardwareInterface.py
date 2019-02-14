@@ -10,8 +10,10 @@ class HardwareInterface:
         initialize_pwm(self.pi, self.pwm_params)
 
     def set_actuator_postions(self, joint_angles):
-        send_servo_commands(self.pi, self.pwm_params, self.servo_params, joint_angles)
-    
+        try:
+            send_servo_commands(self.pi, self.pwm_params, self.servo_params, joint_angles)
+        except Exception as e:
+            print(e)
     def set_actuator_position(self, joint_angle, axis, leg):
         send_servo_command(self.pi, self.pwm_params, self.servo_params, joint_angle, axis, leg)
 

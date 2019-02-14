@@ -35,7 +35,7 @@ class JoystickInterface:
             # msg = self.udp_handle.get()
             msg = self.get_joystick()
             command = Command()
-            print(msg)
+            # print(msg)
             ####### Handle discrete commands ########
             # Check if requesting a state transition to trotting, or from trotting to resting
             gait_toggle = msg["R1"]

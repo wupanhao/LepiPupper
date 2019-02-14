@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        .slidecontainer {
+            width: 100%;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            padding-top: 10px;
+        }
+
+        .label {
+            min-width: 60px;
+            /* display: flex;
+            flex-direction: row;
+            align-items: center; */
+        }
+
+        .label .id {
+            min-width: 20px;
+            display: inline-block;
+        }
+
+        .label .value {
+            min-width: 25px;
+            display: inline-block;
+            margin-left: 5px;
+        }
+
+        .slider {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 15px;
+            border-radius: 5px;
+            background: #d3d3d3;
+            outline: none;
+            opacity: 0.7;
+            -webkit-transition: .2s;
+            transition: opacity .2s;
+        }
+
+        .slider:hover {
+            opacity: 1;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            background: #4CAF50;
+            cursor: pointer;
+        }
+
+        .slider::-moz-range-thumb {
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            background: #4CAF50;
+            cursor: pointer;
+        }
+
+        .slider:disabled::-webkit-slider-thumb {
+            background: gray;
+        }
+
+        .slider:disabled::-moz-range-thumb {
+            background: gray;
+        }
+
+        #sample-slider {
+            display: none;
+        }
+
+        body {
+            max-width: 800px;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            margin: auto;
+        }
+    </style>
+
+    <style>
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 63px;
+            height: 24px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            -webkit-transition: .4s;
+            transition: .4s;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 2px;
+            bottom: 2px;
+            background-color: white;
+            -webkit-transition: .4s;
+            transition: .4s;
+        }
+
+        input:checked+.toggle-slider {
+            background-color: #2196F3;
+        }
+
+        input:focus+.toggle-slider {
+            box-shadow: 0 0 1px #2196F3;
+        }
+
+        input:checked+.toggle-slider:before {
+            -webkit-transform: translateX(20px);
+            -ms-transform: translateX(20px);
+            transform: translateX(20px);
+        }
+
+        /* Rounded sliders */
+        .toggle-slider.round {
+            border-radius: 34px;
+        }
+
+        .toggle-slider.round:before {
+            border-radius: 50%;
+        }
+    </style>
+
+    <style>
+        .button {
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            padding: 5px 15px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+        }
+    </style>
+    <title>舵机较准</title>
+
+</head>
+
+<body>
+
+    <!-- <h1>舵机调平</h1> -->
+    <button class="button" id="enableAll">全部开启</button>
+    <button class="button" id="disableAll">全部关闭</button>
+    <button class="button" id="clear">清零</button>
+    <button class="button" id="save">保存</button>
+    <div class="slider-list">
+
+    </div>
+
+    <div id="sample-slider" class="slidecontainer">
+        <div class="label"><span class="id">1</span>:<span class="value">-15</span></div>
+        <input type="range" min="-150" max="150" value="0" class="slider" disabled>
+        <label class="switch">
+            <input type="checkbox" class="checkbox">
+            <span class="toggle-slider round"></span>
+        </label>
+    </div>
+
+    <script>
+        let angles = []
+        let base_ip = window.location.hostname
+        // base_ip = '192.168.50.133'
+
+        function setAngles(angles) {
+            let angle_str = '[' + angles.join(',') + ']'
+            return fetch('http://' + base_ip + ':8080/set?angles=' + angle_str)
+        }
+
+        function saveAngles() {
+            return fetch('http://' + base_ip + ':8080/save')
+        }
+
+        function onSliderChange(e) {
+            // console.log(e)
+            let i = e.target.dataset.id
+            angles[i] = parseInt(e.target.value)
+            document.querySelector(`.label-${i} .value`).innerText = angles[i]
+            setAngles(angles)
+        }
+        function toggleSwitch(e) {
+            // console.log(e, e.target.checked)
+            let i = e.target.dataset.id
+            let checked = e.target.checked
+            if (checked) {
+                document.querySelector(`#slider-${i}`).disabled = false
+            } else {
+                document.querySelector(`#slider-${i}`).disabled = true
+            }
+        }
+        function createSliders(angles) {
+            let sample = document.querySelector('#sample-slider').cloneNode(true)
+            let container = document.querySelector('.slider-list')
+            sample.id = ''
+            for (let i = 0; i < angles.length; i++) {
+                let ele = sample.cloneNode(true)
+                ele.querySelector('.id').innerText = i + 1
+                ele.querySelector('.label').classList.add(`label-${i}`)
+                ele.querySelector('.label .value').innerText = angles[i]
+                // console.log(ele)
+                ele.querySelector('.slider').dataset.id = i
+                ele.querySelector('.slider').id = `slider-${i}`
+                ele.querySelector('.slider').value = angles[i]
+                // ele.querySelector('input').onchange = onSliderChange
+                ele.querySelector('.slider').oninput = onSliderChange
+                ele.querySelector('.checkbox').dataset.id = i
+                ele.querySelector('.checkbox').onchange = toggleSwitch
+                container.appendChild(ele)
+            }
+        }
+        function toggleAll(enabled = false) {
+            let sliders = document.querySelectorAll('.slider-list .slider')
+            for (let i = 0; i < sliders.length; i++) {
+                sliders[i].disabled = !enabled;
+            }
+            let switchs = document.querySelectorAll('.slider-list .checkbox')
+            for (let i = 0; i < switchs.length; i++) {
+                switchs[i].checked = enabled;
+            }
+        }
+        function enableAll() {
+            toggleAll(true)
+        }
+        function disableAll() {
+            toggleAll(false)
+        }
+        function clear() {
+            let sliders = document.querySelectorAll('.slider-list .slider')
+            for (let i = 0; i < sliders.length; i++) {
+                // console.log(sliders[i])
+                if (!sliders[i].disabled) {
+                    sliders[i].value = 0;
+                    angles[i] = 0
+                    document.querySelector(`.label-${i} .value`).innerText = angles[i]
+                }
+            }
+            setAngles(angles)
+        }
+        function save() {
+            saveAngles(angles).then(console.log)
+        }
+
+        function init(angles) {
+            console.log(angles)
+            createSliders(angles)
+            // for (let i = 0; i < angles.length; i++) {
+            //     document.querySelector(`.label-${i} .value`).innerText = angles[i]
+            //     document.querySelector(`#slider-${i}`).value = angles[i]
+            // }
+            document.querySelector('#enableAll').onclick = enableAll
+            document.querySelector('#disableAll').onclick = disableAll
+            document.querySelector('#clear').onclick = clear
+            document.querySelector('#save').onclick = save
+        }
+        fetch('http://' + base_ip + ':8080/get')
+            .then(function (response) {
+                return response.json();
+            })
+            .then(function (array) {
+                console.log(array);
+                angles = array
+                init(angles)
+            })
+            // let sliders = document.querySelectorAll('.slider-list .slider')
+            // console.log(sliders)
+            // for (let i = 0; i < 18; i++) {
+            //     angles.push(0)
+            // }
+
+    </script>
+
+</body>
+
+</html>
