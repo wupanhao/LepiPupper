@@ -9,12 +9,15 @@ from pupper.Config import Configuration
 from pupper.Kinematics import four_legs_inverse_kinematics
 
 import math
+from calibrate import app
+# Create config
+config = Configuration()
+
+
 def main(use_imu=False):
     """Main program
     """
 
-    # Create config
-    config = Configuration()
     hardware_interface = HardwareInterface()
 
     # Create imu handle
@@ -40,12 +43,15 @@ def main(use_imu=False):
     print("z clearance: ", config.z_clearance)
     print("x shift: ", config.x_shift)
 
+    # exit()
+
     # Wait until the activate button has been pressed
     while True:
         print("Waiting for L1 to activate robot.")
         while True:
-            command = joystick_interface.get_command(state,True)
-            #print(command)
+            # break
+            command = joystick_interface.get_command(state, True)
+            # print(command)
             joystick_interface.set_color(config.ps4_deactivated_color)
             if command.activate_event == 1:
                 break
@@ -73,14 +79,27 @@ def main(use_imu=False):
 
             # Step the controller forward by dt
             controller.run(state, command)
+            # controller.run(state, command)
+            # controller.run(state, command)
+            # controller.run(state, command)
+            # controller.run(state, command)
+            # controller.run(state, command)
+            # controller.run(state, command)
+            # controller.run(state, command)
+            # controller.run(state, command)
+            # controller.run(state, command)
+            # controller.run(state, command)
+            # controller.run(state, command)
 
             # Update the pwm widths going to the servos
             angles = []
             for leg in state.joint_angles:
-              for i in leg:
-                angles.append(int(i/math.pi*180))
-            print(angles,state.joint_angles)
-            hardware_interface.set_actuator_postions(state.joint_angles)
+                for i in leg:
+                    angles.append(int(i/math.pi*180))
+            # print(angles)
+            # print(angles, state.joint_angles)
+            print(hardware_interface.set_actuator_postions(state.joint_angles))
+            # time.sleep(2)
 
 
 main()

@@ -3,9 +3,12 @@ from pupper.HardwareConfig import MICROS_PER_RAD, NEUTRAL_ANGLE_DEGREES, PS4_COL
 from enum import Enum
 
 # TODO: put these somewhere else
+
+
 class PWMParams:
     def __init__(self):
-        self.pins = np.array([[2, 14, 18, 23], [3, 15, 27, 24], [4, 17, 22, 25]])
+        self.pins = np.array(
+            [[2, 14, 18, 23], [3, 15, 27, 24], [4, 17, 22, 25]])
         self.range = 4000
         self.freq = 250
 
@@ -30,15 +33,16 @@ class ServoParams:
 class Configuration:
     def __init__(self):
         ################# CONTROLLER BASE COLOR ##############
-        self.ps4_color = PS4_COLOR    
-        self.ps4_deactivated_color = PS4_DEACTIVATED_COLOR    
+        self.ps4_color = PS4_COLOR
+        self.ps4_deactivated_color = PS4_DEACTIVATED_COLOR
 
         #################### COMMANDS ####################
-        self.max_x_velocity = 0.4
-        self.max_y_velocity = 0.3
+        factor = 1
+        self.max_x_velocity = 0.4/factor
+        self.max_y_velocity = 0.3/factor
         self.max_yaw_rate = 2.0
         self.max_pitch = 30.0 * np.pi / 180.0
-        
+
         #################### MOVEMENT PARAMS ####################
         self.z_time_constant = 0.02
         self.z_speed = 0.03  # maximum speed [m/s]
@@ -70,13 +74,22 @@ class Configuration:
         self.dt = 0.01
         self.num_phases = 4
         self.contact_phases = np.array(
-            [[1, 1, 1, 0], [1, 0, 1, 1], [1, 0, 1, 1], [1, 1, 1, 0]]
+            [[1, 1, 1, 0],
+             [1, 0, 1, 1],
+             [1, 0, 1, 1],
+             [1, 1, 1, 0]]
         )
+        # self.contact_phases = np.array(
+        #     [[0, 1, 1, 1],
+        #      [1, 1, 0, 1],
+        #      [1, 0, 1, 1],
+        #      [1, 1, 1, 0]]
+        # )
         self.overlap_time = (
-            0.10  # duration of the phase where all four feet are on the ground
+            0.10*factor  # duration of the phase where all four feet are on the ground
         )
         self.swing_time = (
-            0.15  # duration of the phase when only two feet are on the ground
+            0.15*factor  # duration of the phase when only two feet are on the ground
         )
 
         ######################## GEOMETRY ######################
@@ -184,14 +197,15 @@ class Configuration:
     @property
     def phase_ticks(self):
         return np.array(
-            [self.overlap_ticks, self.swing_ticks, self.overlap_ticks, self.swing_ticks]
+            [self.overlap_ticks, self.swing_ticks,
+                self.overlap_ticks, self.swing_ticks]
         )
 
     @property
     def phase_length(self):
         return 2 * self.overlap_ticks + 2 * self.swing_ticks
 
-        
+
 class SimulationConfig:
     def __init__(self):
         self.XML_IN = "pupper.xml"
@@ -204,7 +218,7 @@ class SimulationConfig:
         self.JOINT_SOLIMP = "0.9 0.95 0.001"  # joint constraint parameters
         self.GEOM_SOLREF = "0.01 1"  # time constant and damping ratio for geom contacts
         self.GEOM_SOLIMP = "0.9 0.95 0.001"  # geometry contact parameters
-        
+
         # Joint params
         G = 220  # Servo gear ratio
         m_rotor = 0.016  # Servo rotor mass
