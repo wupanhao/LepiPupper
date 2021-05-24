@@ -2,18 +2,21 @@ import numpy as np
 import time
 from src.IMU import IMU
 from src.Controller import Controller
-from src.JoystickInterface import JoystickInterface
+from JoystickInterface import JoystickInterface
 from src.State import State
 from pupper.HardwareInterface import HardwareInterface
 from pupper.Config import Configuration
 from pupper.Kinematics import four_legs_inverse_kinematics
 
+import math
+# Create config
+config = Configuration()
+
+
 def main(use_imu=False):
     """Main program
     """
 
-    # Create config
-    config = Configuration()
     hardware_interface = HardwareInterface()
 
     # Create imu handle
@@ -39,12 +42,15 @@ def main(use_imu=False):
     print("z clearance: ", config.z_clearance)
     print("x shift: ", config.x_shift)
 
+    # exit()
+
     # Wait until the activate button has been pressed
     while True:
         print("Waiting for L1 to activate robot.")
         while True:
-            command = joystick_interface.get_command(state,True)
-            print(command)
+            # break
+            command = joystick_interface.get_command(state, True)
+            # print(command)
             joystick_interface.set_color(config.ps4_deactivated_color)
             if command.activate_event == 1:
                 break
@@ -74,7 +80,14 @@ def main(use_imu=False):
             controller.run(state, command)
 
             # Update the pwm widths going to the servos
-            hardware_interface.set_actuator_postions(state.joint_angles)
+            angles = []
+            for leg in state.joint_angles:
+                for i in leg:
+                    angles.append(int(i/math.pi*180))
+            # print(angles)
+            # print(angles, state.joint_angles)
+            print(hardware_interface.set_actuator_postions(state.joint_angles))
+            # time.sleep(2)
 
 
 main()

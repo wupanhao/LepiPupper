@@ -1,5 +1,5 @@
+#!coding:utf-8
 import numpy as np
-from transforms3d.euler import euler2mat
 
 
 def leg_explicit_inverse_kinematics(r_body_foot, leg_index, config):

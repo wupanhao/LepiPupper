@@ -9,16 +9,15 @@ from pupper.Config import Configuration
 from pupper.Kinematics import four_legs_inverse_kinematics
 
 import math
-from calibrate import app
+# from calibrate import app
 # Create config
 config = Configuration()
+hardware_interface = HardwareInterface()
 
 
 def main(use_imu=False):
     """Main program
     """
-
-    hardware_interface = HardwareInterface()
 
     # Create imu handle
     if use_imu:
@@ -79,17 +78,6 @@ def main(use_imu=False):
 
             # Step the controller forward by dt
             controller.run(state, command)
-            # controller.run(state, command)
-            # controller.run(state, command)
-            # controller.run(state, command)
-            # controller.run(state, command)
-            # controller.run(state, command)
-            # controller.run(state, command)
-            # controller.run(state, command)
-            # controller.run(state, command)
-            # controller.run(state, command)
-            # controller.run(state, command)
-            # controller.run(state, command)
 
             # Update the pwm widths going to the servos
             angles = []
@@ -97,9 +85,34 @@ def main(use_imu=False):
                 for i in leg:
                     angles.append(int(i/math.pi*180))
             # print(angles)
-            # print(angles, state.joint_angles)
-            print(hardware_interface.set_actuator_postions(state.joint_angles))
+            print(angles, state.joint_angles)
+            pub_joint_states(state.joint_angles)
+            # print(hardware_interface.set_actuator_postions(state.joint_angles))
             # time.sleep(2)
 
 
-main()
+def pub_joint_states(joint_angles):
+    angles = []
+    ids = []
+    for leg_index in range(4):
+        for axis_index in range(3):
+            angle = (-joint_angles[axis_index][leg_index]) * \
+                hardware_interface.servo_params.servo_multipliers[axis_index, leg_index]
+            angles.append(angle)
+    joint_msg.position = angles
+    joint_states.publish(joint_msg)
+
+
+if __name__ == '__main__':
+    import rospy
+    from sensor_msgs.msg import JointState
+    rospy.init_node('joystick_controller_node')
+    joint_states = rospy.Publisher('/joint_states', JointState)
+    joint_msg = JointState()
+    joint_msg.name = ["shoulder_joint_rf", "elbow_joint_rf", "wrist_joint_rf",
+                      "shoulder_joint_lf", "elbow_joint_lf", "wrist_joint_lf",
+                      "shoulder_joint_rb", "elbow_joint_rb", "wrist_joint_rb",
+                      "shoulder_joint_lb", "elbow_joint_lb", "wrist_joint_lb",
+                      ]
+    main()
+

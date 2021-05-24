@@ -1,14 +1,14 @@
 import numpy as np
 from transforms3d.euler import euler2mat
 
+
 class StanceController:
     def __init__(self, config):
         self.config = config
 
-
     def position_delta(self, leg_index, state, command):
         """Calculate the difference between the next desired body location and the current body location
-        
+
         Parameters
         ----------
         z_measured : float
@@ -43,6 +43,6 @@ class StanceController:
     def next_foot_location(self, leg_index, state, command):
         foot_location = state.foot_locations[:, leg_index]
         (delta_p, delta_R) = self.position_delta(leg_index, state, command)
-        incremented_location = delta_R @ foot_location + delta_p
+        incremented_location = delta_R.dot(foot_location) + delta_p
 
         return incremented_location

@@ -82,15 +82,15 @@ def set():
     except Exception as e:
         print(e)
 
-    stand = [0, 0, 0, 0, 44, 44, 44, 44, -48, -48, -48, -48]
-    #stand = [0,0,0,0,45,45,45,45,-45,-45,-45,-45]
+    # stand = [0, 0, 0, 0, 44, 44, 44, 44, -48, -48, -48, -48]
+    stand = [0, 0, 0, 0, 45, 45, 45, 45, -45, -45, -45, -45]
     #stand = [-12, 12, -12, 12, 61, 61, 61, 61, -70, -70, -70, -70]
     rad = np.array(stand).reshape((3, 4))
     rad = rad/180.0*math.pi
     print(rad)
     hardware_interface.servo_params.neutral_angle_degrees = np.array(
         toConfig(angles))
-    # hardware_interface.set_actuator_postions(rad)
+    hardware_interface.set_actuator_postions(rad)
     return jsonify(angles)
 
 

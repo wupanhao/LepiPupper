@@ -163,10 +163,11 @@ class HardwareInterface:
     def set_actuator_postions(self, joint_angles):
         angles = []
         ids = []
+        leg_offset = [0, 45, -45]
         for leg_index in range(4):
             for axis_index in range(3):
-                angle = (-joint_angles[axis_index][leg_index]/math.pi*180 - self.servo_params.neutral_angle_degrees[axis_index][leg_index]
-                         ) * self.servo_params.servo_multipliers[axis_index, leg_index]
+                angle = -(joint_angles[axis_index][leg_index]/math.pi*180 - leg_offset[axis_index]) * self.servo_params.servo_multipliers[axis_index, leg_index] - (
+                    self.servo_params.neutral_angle_degrees[axis_index][leg_index])
                 # print(angle)
                 id = leg_index*3+axis_index+1
                 ids.append(id)

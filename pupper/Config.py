@@ -38,8 +38,8 @@ class Configuration:
 
         #################### COMMANDS ####################
         factor = 1
-        self.max_x_velocity = 0.4/factor
-        self.max_y_velocity = 0.3/factor
+        self.max_x_velocity = 0.35/factor
+        self.max_y_velocity = 0.25/factor
         self.max_yaw_rate = 2.0
         self.max_pitch = 30.0 * np.pi / 180.0
 
