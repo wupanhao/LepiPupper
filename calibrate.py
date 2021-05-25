@@ -1,5 +1,4 @@
 from pupper.Kinematics import four_legs_inverse_kinematics
-from pupper.Config import Configuration
 from src.State import State
 from JoystickInterface import JoystickInterface
 from src.Controller import Controller
@@ -9,18 +8,6 @@ from flask import Flask, jsonify, request, json
 from flask_cors import CORS
 import numpy as np
 import math
-from pupper.HardwareInterface import HardwareInterface
-
-try:
-    from pupper.HardwareConfig import NEUTRAL_ANGLE_DEGREES
-except Exception as e:
-    print(e)
-    NEUTRAL_ANGLE_DEGREES = np.array(
-        [[0., 0., 0., 0.], [0., 0., 0., 0.], [0., 0., 0., 0.]])
-angles = []
-for i in range(4):
-    for j in range(3):
-        angles.append(NEUTRAL_ANGLE_DEGREES[j, i])
 
 
 def toConfig(angles):
@@ -31,15 +18,6 @@ def toConfig(angles):
     return res.tolist()
 
 
-def toArray(res):
-    angles = [0 for i in range(12)]
-    for i in range(3):
-        for j in range(4):
-            angles[j*3+i] = res[i][j]
-    return angles
-
-
-print(angles)
 template = '''
 import numpy as np
 
@@ -51,6 +29,42 @@ SERVO_ARRAY_PLACEHOLDER
 PS4_COLOR = {"red": 0, "blue": 0, "green": 255}
 PS4_DEACTIVATED_COLOR = {"red": 0, "blue": 0, "green": 50}
 '''
+
+
+def toArray(res):
+    angles = [0 for i in range(12)]
+    for i in range(3):
+        for j in range(4):
+            angles[j*3+i] = res[i][j]
+    return angles
+
+
+def saveConfig(angles):
+    try:
+        with open('./pupper/HardwareConfig.py', 'w') as f:
+            f.write(template.replace(
+                'SERVO_ARRAY_PLACEHOLDER', str(toConfig(angles))))
+            return 0
+    except Exception as e:
+        print(e)
+        return 1
+
+
+try:
+    from pupper.HardwareConfig import NEUTRAL_ANGLE_DEGREES
+except Exception as e:
+    print(e)
+    NEUTRAL_ANGLE_DEGREES = np.array(
+        [[0., 0., 0., 0.], [0., 0., 0., 0.], [0., 0., 0., 0.]])
+    saveConfig(toArray(NEUTRAL_ANGLE_DEGREES))
+
+if True:
+    from pupper.HardwareInterface import HardwareInterface
+    from pupper.Config import Configuration
+
+angles = toArray(NEUTRAL_ANGLE_DEGREES)
+print(angles)
+
 
 # Create config
 config = Configuration()
@@ -96,14 +110,8 @@ def set():
 
 @app.route('/save')
 def save():
-    try:
-        with open('./pupper/HardwareConfig.py', 'w') as f:
-            f.write(template.replace(
-                'SERVO_ARRAY_PLACEHOLDER', str(toConfig(angles))))
-    except Exception as e:
-        print(e)
-        return jsonify({"status": 1})
-    return jsonify({"status": 0})
+    status = saveConfig(angles)
+    return jsonify({"status": status})
 
 
 def main(use_imu=False):
