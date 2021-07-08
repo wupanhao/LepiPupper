@@ -2,7 +2,7 @@
 import time
 
 header = [0x12, 0x4c]
-# header = [0xff, 0xff]
+header = [0xff, 0xff]
 
 
 def chk_sum(data):
@@ -56,7 +56,11 @@ class SServo(object):
             import serial.tools.list_ports
             serial_ports = [i[0] for i in serial.tools.list_ports.comports()]
             print(serial_ports)
-            port = serial_ports[0]
+            if 'USB' in serial_ports[0]:
+                port = serial_ports[0]
+            else:
+                port = '/dev/ttyAMA1'
+        self.header = header
         self.port = serial.Serial(port=port, baudrate=baud_rate, bytesize=8, parity=serial.PARITY_NONE,
                                   stopbits=serial.STOPBITS_ONE, timeout=0.01)
 
@@ -177,6 +181,17 @@ class SServo(object):
         self.send_hex(data)
         return len(self.read_hex())
 
+    def set_servo_angles(self, angles):
+        # angles = []
+        ids = []
+        for leg_index in range(4):
+            for axis_index in range(3):
+                id = leg_index*3+axis_index+1
+                ids.append(id)
+        servos = [Servo(ids[i], int(angles[i]/200.0*1023+1023/2), speed=2000)
+                  for i in range(12)]
+        self.set_positions_sync(servos)
+
     def scan(self):
         devices = []
         for i in range(253):
@@ -245,11 +260,25 @@ class SServo(object):
     def change_id(self, old, new):
         # print(self.read_u8(1, EEPROM.LOCK))
         self.write_u8(old, EEPROM.LOCK, 0)
-        # time.sleep(0.1)
+        time.sleep(0.1)
         self.set_id(old, new)
+        time.sleep(0.1)
         self.write_u8(new, EEPROM.LOCK, 1)
-        time.sleep(0.01)
+        time.sleep(0.2)
         return self.ping(new)
+
+    def scan_print(self, n=254):
+        servos = []
+        print("正在扫描,包头: "),
+        print("0x%X 0x%X" % (self.header[0], self.header[1]))
+        print("检测到舵机:"),
+        for i in range(n):
+            if self.ping(i):
+                servos.append(i)
+                print(str(i)+' '),
+                self.set_position(i, 1023/2, ms=500)
+        print("\n扫描结束")
+        return servos
 
 
 if __name__ == '__main__':
@@ -276,13 +305,7 @@ if __name__ == '__main__':
     time.sleep(0.1)
     servo.write_u8(2, EEPROM.LOCK, 1)
     '''
-    print("正在扫描舵机,包头: "),
-    print("0x%X 0x%X" % (header[0], header[1]))
-    print("检测到舵机:"),
-    for i in range(25):
-        if servo.ping(i):
-            print(str(i)+' '),
-    print("\n扫描结束")
+    servo.scan_print(25)
     # exit(0)
     '''
     # print(i, servo.ping(i))
@@ -298,12 +321,12 @@ if __name__ == '__main__':
     while True:
         start = time.time()
         servo.set_positions_sync(
-            [Servo(1, 400, speed=2000), Servo(2, 450, speed=1000)])
+            [Servo(1, 1023/2, speed=2000), Servo(2, 1023/2, speed=1000)])
         # print('transort costs %f ms' % ((time.time() - start)*1000))
         time.sleep(1.5)
-        servo.set_positions_sync(
-            [Servo(1, 600, speed=2000), Servo(2, 650, speed=1000)])
-        time.sleep(1.5)
+        # servo.set_positions_sync(
+        #     [Servo(1, 600, speed=2000), Servo(2, 650, speed=1000)])
+        # time.sleep(1.5)
         # break
     exit(0)
     while True:

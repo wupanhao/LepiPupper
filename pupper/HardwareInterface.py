@@ -172,26 +172,10 @@ class HardwareInterface:
                 id = leg_index*3+axis_index+1
                 ids.append(id)
                 angles.append(int(angle))
-                # position = int( *10)
-                # self.servo_states[id-1] = position
-        # self.pi.set_positions(self.servo_ids, self.servo_states)
-
-        # self.pi.set_position(id, position)
-        # continue
-        # if self.servo_states[id-1] == position:
-        #     continue
-        # else:
-        #     self.servo_states[id-1] = position
-        #     self.pi.set_position(id, position)
         servos = [Servo(ids[i], int(angles[i]/200.0*1023+1023/2), speed=2000)
                   for i in range(12)]
         self.pi.set_positions_sync(servos)
         return ids, angles
-        try:
-            send_servo_commands(self.pi, self.pwm_params,
-                                self.servo_params, joint_angles)
-        except Exception as e:
-            print(e)
 
     def set_actuator_angles(self, angles):
         # angles = []

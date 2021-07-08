@@ -163,19 +163,24 @@
             cursor: pointer;
         }
     </style>
-    <title>舵机较准</title>
+    <title>角度测试</title>
 
 </head>
 
 <body>
 
     <!-- <h1>舵机调平</h1> -->
+    <button class="button" id="refresh">刷新</button>
     <button class="button" id="enableAll">全部开启</button>
     <button class="button" id="disableAll">全部关闭</button>
     <button class="button" id="clear">清零</button>
     <button class="button" id="save">保存</button>
+    <button class="button" id="debugging">调试</button>
     <div class="slider-list">
 
+    </div>
+    <div>
+        <textarea id="angles-list" cols="115" rows="30"></textarea>
     </div>
 
     <div id="sample-slider" class="slidecontainer">
@@ -189,16 +194,17 @@
 
     <script>
         let angles = []
+        let angles_list = []
         let base_ip = window.location.hostname
         // base_ip = '192.168.50.133'
 
         function setAngles(angles) {
             let angle_str = '[' + angles.join(',') + ']'
-            return fetch('http://' + base_ip + ':8080/set-calibrate?angles=' + angle_str)
+            return fetch('http://' + base_ip + ':8080/set?angles=' + angle_str)
         }
 
         function saveAngles() {
-            return fetch('http://' + base_ip + ':8080/save-calibrate')
+            return fetch('http://' + base_ip + ':8080/save')
         }
 
         function onSliderChange(e) {
@@ -254,20 +260,52 @@
         function disableAll() {
             toggleAll(false)
         }
-        function clear() {
+
+        function updateSliderValue(angles){
             let sliders = document.querySelectorAll('.slider-list .slider')
             for (let i = 0; i < sliders.length; i++) {
                 // console.log(sliders[i])
-                if (!sliders[i].disabled) {
-                    sliders[i].value = 0;
-                    angles[i] = 0
-                    document.querySelector(`.label-${i} .value`).innerText = angles[i]
-                }
+                sliders[i].value = angles[i];
+                document.querySelector(`.label-${i} .value`).innerText = angles[i]
             }
+        }
+
+        function clear() {
+            angles = [0, 45, -45, 0, 45, -45, 0, 45, -45, 0, 45, -45]
+            updateSliderValue(angles)
             setAngles(angles)
         }
+
+        function refresh(){
+            fetch('http://' + base_ip + ':8080/get')
+                .then(function (response) {
+                    return response.json();
+                })
+                .then(function (angles) {
+                    updateSliderValue(angles)
+                })
+        }
+
+        async function sleep(ms){
+            return new Promise(resolve => {
+                setTimeout(() => {
+                    resolve()
+                },ms)
+            })
+        }
+
         function save() {
-            saveAngles(angles).then(console.log)
+            // saveAngles(angles).then(console.log)
+            angles_list.push(JSON.parse( JSON.stringify(angles)))
+            document.querySelector('#angles-list').value = JSON.stringify(angles_list)
+        }
+
+        async function debugging(){
+            for (let i = 0; i < angles_list.length; i++) {
+                const element = angles_list[i];
+                await setAngles(element)
+                await sleep(500)
+            }
         }
 
         function init(angles) {
@@ -277,12 +315,25 @@
             //     document.querySelector(`.label-${i} .value`).innerText = angles[i]
             //     document.querySelector(`#slider-${i}`).value = angles[i]
             // }
+            document.querySelector('#refresh').onclick = refresh
             document.querySelector('#enableAll').onclick = enableAll
             document.querySelector('#disableAll').onclick = disableAll
             document.querySelector('#clear').onclick = clear
             document.querySelector('#save').onclick = save
+            document.querySelector('#debugging').onclick = debugging
+            // [[0,20,-20,0,21,-21,0,57,-59,0,59,-59],[0,45,-45,0,45,-45,0,45,-45,0,45,-45]]
+            document.querySelector('#angles-list').oninput = (evt) => {
+                console.log(evt)
+                try {
+                    let array = JSON.parse(document.querySelector('#angles-list').value)
+                    angles_list = array
+                    console.log(angles_list)
+                } catch (error) {
+                    console.log(error)
+                }
+            }
         }
-        fetch('http://' + base_ip + ':8080/get-calibrate')
+        fetch('http://' + base_ip + ':8080/get')
             .then(function (response) {
                 return response.json();
             })

@@ -35,7 +35,7 @@ def toArray(res):
     angles = [0 for i in range(12)]
     for i in range(3):
         for j in range(4):
-            angles[j*3+i] = res[i][j]
+            angles[j*3+i] = int(res[i][j])
     return angles
 
 
@@ -49,7 +49,6 @@ def saveConfig(angles):
         print(e)
         return 1
 
-
 try:
     from pupper.HardwareConfig import NEUTRAL_ANGLE_DEGREES
 except Exception as e:
@@ -62,8 +61,11 @@ if True:
     from pupper.HardwareInterface import HardwareInterface
     from pupper.Config import Configuration
 
-angles = toArray(NEUTRAL_ANGLE_DEGREES)
-print(angles)
+calibrations = toArray(NEUTRAL_ANGLE_DEGREES)
+stand = np.array([0, 0, 0, 0, 45, 45, 45, 45, -
+                  45, -45, -45, -45]).reshape((3, 4))
+angles = toArray(stand)
+print(calibrations)
 
 
 # Create config
@@ -79,20 +81,24 @@ def index():
     with open('./index.html', 'r') as f:
         return f.read()
 
+@app.route('/test')
+def test():
+    with open('./test.html', 'r') as f:
+        return f.read()
 
-@app.route('/get')
-def get():
-    return jsonify(angles)
+@app.route('/get-calibrate')
+def get_calibrate():
+    return jsonify(calibrations)
 
 
-@app.route('/set')
-def set():
-    global angles
+@app.route('/set-calibrate')
+def set_calibrate():
+    global calibrations
     data = request.args.get('angles')
     try:
         array = json.loads(data)
         if type(array) == list and len(array) == 12:
-            angles = array
+            calibrations = array
     except Exception as e:
         print(e)
 
@@ -103,18 +109,43 @@ def set():
     rad = rad/180.0*math.pi
     print(rad)
     hardware_interface.servo_params.neutral_angle_degrees = np.array(
-        toConfig(angles))
+        toConfig(calibrations))
     hardware_interface.set_actuator_postions(rad)
+    return jsonify(calibrations)
+
+
+@app.route('/save-calibrate')
+def save_calibrate():
+    status = saveConfig(calibrations)
+    return jsonify({"status": status})
+
+@app.route('/set')
+def set():
+    global angles
+    data = request.args.get('angles')
+    try:
+        array = json.loads(data)
+        if type(array) == list and len(array) == 12:
+            angles = array
+            rad = np.array(toConfig(array))/180.0*np.pi
+            hardware_interface.set_actuator_postions(rad)
+    except Exception as e:
+        print(e)
+    return data
+
+
+@app.route('/get')
+def get():
     return jsonify(angles)
 
 
 @app.route('/save')
 def save():
-    status = saveConfig(angles)
-    return jsonify({"status": status})
-
+    print(angles)
+    return jsonify(angles)
 
 def main(use_imu=False):
+    global angles
     """Main program
     """
 
@@ -179,10 +210,7 @@ def main(use_imu=False):
             controller.run(state, command)
 
             # Update the pwm widths going to the servos
-            angles = []
-            for leg in state.joint_angles:
-                for i in leg:
-                    angles.append(int(i/math.pi*180))
+            angles = toArray(state.joint_angles/np.pi*180)
             # print(angles)
             # print(angles, state.joint_angles)
             print(hardware_interface.set_actuator_postions(state.joint_angles))

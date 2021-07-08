@@ -1,5 +1,5 @@
 #!coding:utf-8
-from pi_driver import SServo
+from sservo import SServo
 import time
 import os
 
